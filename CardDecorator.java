@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// CardDecorator.java
 public abstract class CardDecorator extends Card {
     protected Card decoratedCard;
     

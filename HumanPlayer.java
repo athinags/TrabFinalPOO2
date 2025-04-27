@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// HumanPlayer.java
 import java.util.Scanner;
 
 public class HumanPlayer extends Player {

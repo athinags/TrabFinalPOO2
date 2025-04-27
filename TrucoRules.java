@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// TrucoRules.java
 import java.util.List;
 
 public interface TrucoRules {

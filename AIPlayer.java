@@ -1,7 +1,4 @@
-package br.com.trucomineiro.model;
-
-import br.com.trucomineiro.strategy.AIStrategy;
-
+// AIPlayer.java
 public class AIPlayer extends Player {
     private AIStrategy strategy;
     

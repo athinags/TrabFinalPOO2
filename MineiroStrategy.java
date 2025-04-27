@@ -1,7 +1,4 @@
-package br.com.trucomineiro.strategy;
-
-import br.com.trucomineiro.model.Card;
-import br.com.trucomineiro.model.Table;
+// MineiroStrategy.java
 import java.util.Comparator;
 import java.util.List;
 
@@ -50,6 +47,10 @@ public class MineiroStrategy implements AIStrategy {
     
     private int evaluateHandStrength(List<Card> hand) {
         // Soma o valor de todas as cartas na mão
-        return hand.stream().mapToInt(Card::getMineiroValue).sum();
+        int sum = 0;
+        for (Card card : hand) {
+            sum += card.getMineiroValue();
+        }
+        return sum;
     }
 }

@@ -1,8 +1,4 @@
-package br.com.trucomineiro.model;
-
-import br.com.trucomineiro.strategy.MineiroStrategy;
-import br.com.trucomineiro.strategy.RandomStrategy;
-
+// PlayerFactory.java
 public class PlayerFactory {
     public static Player createHumanPlayer(String name) {
         return new HumanPlayer(name);

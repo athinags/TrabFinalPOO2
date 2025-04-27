@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// MineiroRules.java
 import java.util.List;
 
 public class MineiroRules implements TrucoRules {

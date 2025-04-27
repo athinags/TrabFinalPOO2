@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// Suit.java
 public enum Suit {
-    HEARTS, DIAMONDS, CLUBS, SPADES
+    ESPADAS, COPAS, PAUS, OUROS
 }

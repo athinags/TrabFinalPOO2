@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// TrucoDeck.java
 public class TrucoDeck extends Deck {
     @Override
     protected void initializeDeck() {

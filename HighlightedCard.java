@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// HighlightedCard.java
 public class HighlightedCard extends CardDecorator {
     private boolean isHighlighted = true;
     

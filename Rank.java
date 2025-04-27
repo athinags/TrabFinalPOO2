@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// Rank.java
 public enum Rank {
-    ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, JACK, QUEEN, KING
+    ÁS, DOIS, TRÊS, QUATRO, CINCO, SEIS, SETE, RAINHA, VALETE, REIS
 }

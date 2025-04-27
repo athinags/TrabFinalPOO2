@@ -1,6 +1,4 @@
-package br.com.trucomineiro.model;
-
-import br.com.trucomineiro.view.GameObserver;
+// Table.java
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -12,7 +10,7 @@ public class Table {
     private int currentRound;
     private int currentPoints;
     private boolean trucoRequested;
-    private List<GameObserver> observers;
+    private boolean trucoRejected;
     private int[] roundsWonByTeam; // índice 0 = time 1, índice 1 = time 2
     private List<Team> teams;
     
@@ -22,7 +20,7 @@ public class Table {
         currentRound = 1;
         currentPoints = 1;
         trucoRequested = false;
-        observers = new ArrayList<>();
+        trucoRejected = false;
         roundsWonByTeam = new int[2];
         teams = new ArrayList<>();
     }
@@ -31,21 +29,10 @@ public class Table {
         this.teams = teams;
     }
     
-    public void addObserver(GameObserver observer) {
-        observers.add(observer);
-    }
-    
-    public void notifyObservers(GameState state) {
-        for (GameObserver observer : observers) {
-            observer.update(state, this);
-        }
-    }
-    
     public void addCard(Card card, Player player) {
         cardsOnTable.add(card);
         currentPlayers.add(player);
         System.out.println(player.getName() + " jogou " + card);
-        notifyObservers(GameState.CARD_PLAYED);
     }
     
     public List<Card> getCardsOnTable() {
@@ -96,16 +83,17 @@ public class Table {
                 break;
             }
         }
-        
-        notifyObservers(GameState.NEW_ROUND);
     }
     
-    private void resetHand() {
+    public void resetHand() {
         System.out.println("Nova mão começando!");
         currentRound = 1;
         roundsWonByTeam = new int[2];
         currentPoints = 1;
         trucoRequested = false;
+        trucoRejected = false;
+        cardsOnTable.clear();
+        currentPlayers.clear();
     }
     
     public int getCurrentPoints() {
@@ -115,20 +103,19 @@ public class Table {
     public void requestTruco() {
         trucoRequested = true;
         System.out.println("TRUCO!!!");
-        notifyObservers(GameState.TRUCO_REQUESTED);
     }
     
     public void acceptTruco() {
-        currentPoints += 3;
+    	if (currentPoints==1) currentPoints=3;
+    	else currentPoints += 3;
         trucoRequested = false;
         System.out.println("Truco aceito! Valor da mão: " + currentPoints + " pontos");
-        notifyObservers(GameState.TRUCO_ACCEPTED);
     }
     
     public void rejectTruco() {
         trucoRequested = false;
+        trucoRejected = true;
         System.out.println("Truco recusado!");
-        notifyObservers(GameState.TRUCO_REJECTED);
     }
     
     public int getRoundsWonByTeam(int teamIndex) {
@@ -139,11 +126,15 @@ public class Table {
     }
     
     public boolean canRequestTruco() {
-        return currentPoints < 12; // No truco mineiro, o valor máximo é 12
+        return currentPoints <= 12; // No truco mineiro, o valor máximo é 12
     }
     
     public boolean isTrucoRequested() {
         return trucoRequested;
+    }
+    
+    public boolean isTrucoRejected() {
+        return trucoRejected;
     }
     
     public List<Team> getTeams() {

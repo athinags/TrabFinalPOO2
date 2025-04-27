@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// GameState.java
 public enum GameState {
     WAITING_PLAYERS,
     DEALING,

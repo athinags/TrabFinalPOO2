@@ -1,5 +1,4 @@
-package br.com.trucomineiro.model;
-
+// Team.java
 import java.util.ArrayList;
 import java.util.List;
 

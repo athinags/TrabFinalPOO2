@@ -1,7 +1,4 @@
-package br.com.trucomineiro.strategy;
-
-import br.com.trucomineiro.model.Card;
-import br.com.trucomineiro.model.Table;
+// RandomStrategy.java
 import java.util.List;
 import java.util.Random;
 
