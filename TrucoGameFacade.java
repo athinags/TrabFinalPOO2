@@ -1,5 +1,3 @@
-
-// TrucoGameFacade.java
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +6,7 @@ import java.util.List;
  * Esta classe simplifica a interação com o sistema de jogo,
  * fornecendo uma interface unificada para as principais operações
  */
-public class TrucoGameFacade {
+public class TrucoGameFacade implements GameSubject {
     private Deck deck;
     private List<Team> teams;
     private Table table;
@@ -17,6 +15,7 @@ public class TrucoGameFacade {
     private int dealerIndex;
     private int currentPlayerIndex;
     private List<Player> playOrder;
+    private List<GameObserver> observers; // Nova lista de observadores
     
     public TrucoGameFacade() {
         deck = new TrucoDeck();
@@ -27,6 +26,57 @@ public class TrucoGameFacade {
         dealerIndex = 0;
         currentPlayerIndex = 0;
         playOrder = new ArrayList<>();
+        observers = new ArrayList<>(); // Inicializa a lista de observadores
+    }
+    
+    // Implementação dos métodos da interface GameSubject
+    @Override
+    public void addObserver(GameObserver observer) {
+        observers.add(observer);
+    }
+    
+    @Override
+    public void removeObserver(GameObserver observer) {
+        observers.remove(observer);
+    }
+    
+    @Override
+    public void notifyObservers(GameState state) {
+        currentState = state;
+        for (GameObserver observer : observers) {
+            observer.onGameStateChanged(state, table);
+        }
+    }
+    
+    // Novos métodos para notificar eventos específicos
+    private void notifyCardPlayed(Player player, Card card) {
+        for (GameObserver observer : observers) {
+            observer.onCardPlayed(player, card);
+        }
+    }
+    
+    private void notifyRoundFinished(Team winnerTeam) {
+        for (GameObserver observer : observers) {
+            observer.onRoundFinished(winnerTeam);
+        }
+    }
+    
+    private void notifyHandFinished(Team winnerTeam, int points) {
+        for (GameObserver observer : observers) {
+            observer.onHandFinished(winnerTeam, points);
+        }
+    }
+    
+    private void notifyTrucoRequested(Player requestingPlayer) {
+        for (GameObserver observer : observers) {
+            observer.onTrucoRequested(requestingPlayer);
+        }
+    }
+    
+    private void notifyTrucoResponse(boolean accepted) {
+        for (GameObserver observer : observers) {
+            observer.onTrucoResponse(accepted);
+        }
     }
     
     /**
@@ -49,10 +99,9 @@ public class TrucoGameFacade {
         if (teams.size() == 2 && teams.get(0).isComplete() && teams.get(1).isComplete()) {
             // Define a ordem de jogo intercalando os times
             setupPlayOrder();
-            currentState = GameState.DEALING;
+            notifyObservers(GameState.DEALING);
             dealCards();
-            currentState = GameState.PLAYING;
-            printGameState();
+            notifyObservers(GameState.PLAYING);
             System.out.println("Jogo iniciado com sucesso!");
             playGame();
         } else {
@@ -110,11 +159,13 @@ public class TrucoGameFacade {
                 Team winner = teams.get(0).getScore() >= 12 ? teams.get(0) : teams.get(1);
                 System.out.println("\n===== FIM DE JOGO =====");
                 System.out.println("O time " + winner.getName() + " venceu o jogo!");
+                notifyObservers(GameState.GAME_OVER);
                 break;
             }
             
             // Prepara a próxima mão
             dealCards();
+            notifyObservers(GameState.DEALING);
         }
     }
     
@@ -131,6 +182,17 @@ public class TrucoGameFacade {
             playRound();
             round++;
         }
+        
+        // Verifica qual time ganhou a mão
+        for (int i = 0; i < teams.size(); i++) {
+            if (table.getRoundsWonByTeam(i) >= 2) {
+                Team winnerTeam = teams.get(i);
+                notifyHandFinished(winnerTeam, table.getCurrentPoints());
+                break;
+            }
+        }
+        
+        notifyObservers(GameState.HAND_FINISHED);
     }
     
     /**
@@ -146,6 +208,7 @@ public class TrucoGameFacade {
             
             // Jogador decide se pede truco
             if (decideTruco(currentPlayer)) {
+                notifyTrucoRequested(currentPlayer);
                 requestTruco(currentPlayer);
                 
                 // Se o truco foi recusado, terminamos a mão
@@ -158,11 +221,29 @@ public class TrucoGameFacade {
             Card playedCard = currentPlayer.playCard(table);
             if (playedCard != null) {
                 table.addCard(playedCard, currentPlayer);
+                notifyCardPlayed(currentPlayer, playedCard);
             }
+        }
+        
+        // Determina o vencedor da rodada
+        MineiroRules rules = new MineiroRules();
+        Player roundWinner = rules.determineRoundWinner(table.getCurrentPlayers(), table.getCardsOnTable());
+        Team winnerTeam = null;
+        
+        for (Team team : teams) {
+            if (team.getPlayers().contains(roundWinner)) {
+                winnerTeam = team;
+                break;
+            }
+        }
+        
+        if (winnerTeam != null) {
+            notifyRoundFinished(winnerTeam);
         }
         
         // Avança para a próxima rodada
         table.nextRound();
+        notifyObservers(GameState.NEW_ROUND);
         
         // Atualiza o jogador inicial para a próxima rodada
         currentPlayerIndex = (currentPlayerIndex + 1) % playOrder.size();
@@ -202,47 +283,30 @@ public class TrucoGameFacade {
             boolean accepted = respondingPlayer.decideTruco(table);
             if (accepted) {
                 table.acceptTruco();
+                notifyTrucoResponse(true);
             } else {
                 table.rejectTruco();
+                notifyTrucoResponse(false);
                 // No truco mineiro, se recusar o truco, o outro time ganha a mão
                 if (requestingTeam != null) {
                     requestingTeam.addPoints(table.getCurrentPoints());
+                    notifyHandFinished(requestingTeam, table.getCurrentPoints());
                 }
             }
         }
     }
     
     /**
-     * Substituição simplificada do Observer para imprimir o estado do jogo
+     * Cria uma partida com jogadores humanos e IA
      */
-    private void printGameState() {
-        System.out.println("\n===== Estado do Jogo: " + currentState + " =====");
-        System.out.println("Cartas na mesa: " + table.getCardsOnTable());
-        System.out.println("Rodada atual: " + table.getCurrentRound());
-        System.out.println("Pontos da mão atual: " + table.getCurrentPoints());
-        
-        if (teams != null && teams.size() >= 2) {
-            Team team1 = teams.get(0);
-            Team team2 = teams.get(1);
-            
-            System.out.println("Rodadas ganhas por " + team1.getName() + ": " + table.getRoundsWonByTeam(0));
-            System.out.println("Rodadas ganhas por " + team2.getName() + ": " + table.getRoundsWonByTeam(1));
-            System.out.println("Pontuação total - " + team1.getName() + ": " + team1.getScore() + 
-                              ", " + team2.getName() + ": " + team2.getScore());
-        }
-        System.out.println("=====================================\n");
-    }
-    
-    //Cria uma partida com jogadores humanos e IA
-     
     public void setupDefaultGame() {
         // Cria times
         Team team1 = new Team("Nós");
         Team team2 = new Team("Eles");
         
         // Adiciona jogadores
-        team1.addPlayer(PlayerFactory.createHumanPlayer("Você"));
-        team1.addPlayer(PlayerFactory.createMineiroAIPlayer("Seu parceiro"));
+        team1.addPlayer(PlayerFactory.createHumanPlayer("Jogador"));
+        team1.addPlayer(PlayerFactory.createMineiroAIPlayer("Parceiro"));
         team2.addPlayer(PlayerFactory.createRandomAIPlayer("Oponente 1"));
         team2.addPlayer(PlayerFactory.createRandomAIPlayer("Oponente 2"));
         
